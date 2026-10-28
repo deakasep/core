@@ -65,7 +65,7 @@ Waktu respon pertama, % chat terjawab Level A tanpa koreksi, lead tercatat, konv
 
 ## Produk Pertama yang Dijual
 
-**"Asisten Balas Inquiry"** untuk klien Pilar 1: staf menempel pesan tamu, AI menulis draft dari fakta yang dikonfirmasi, approver pesan klien mengirim sendiri dari WhatsApp Business (Level B, tanpa integrasi API). Rancangan lengkap & keputusan: [clau-content `docs/review-packet-task-066.md`](https://github.com/d34faiza-commits/clau-content/blob/main/docs/review-packet-task-066.md) (TASK-066, ditunda).
+**"Asisten Balas Inquiry"** untuk klien Pilar 1: staf menempel pesan tamu, AI menulis draft dari fakta yang dikonfirmasi, approver pesan klien mengirim sendiri dari WhatsApp Business (Level B, tanpa integrasi API). Rancangan lengkap & keputusan: [clau-content `docs/review-packet-task-066.md`](https://github.com/deakasep/content/blob/main/docs/review-packet-task-066.md) (TASK-066, ditunda).
 
 ## Gerbang Khusus Pilar Ini
 

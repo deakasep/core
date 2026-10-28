@@ -6,8 +6,8 @@ Panduan memakai ekosistem CLAU AI setelah split menjadi 3 repo.
 
 ```bash
 # Repo pilar atau platform (otomatis menarik core ke folder core/)
-git clone --recurse-submodules https://github.com/d34faiza-commits/clau-market.git
-git clone --recurse-submodules https://github.com/d34faiza-commits/clau-agent.git
+git clone --recurse-submodules https://github.com/deakasep/market.git
+git clone --recurse-submodules https://github.com/deakasep/agent.git
 
 # Kalau sudah ter-clone tanpa submodule
 cd clau-market
