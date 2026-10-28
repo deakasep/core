@@ -2,13 +2,13 @@
 
 > Peta repo untuk AI agent. Baca file ini dulu sebelum menjelajah repo. Last updated: 2026-10-27
 
-> 🔔 **Sesi baru: baca [status & handoff CLAU AI](https://github.com/d34faiza-commits/clau-content/blob/main/docs/status.md) dulu** (otoritas, keputusan yang sudah diambil, status, pekerjaan terbuka). Repo Jerco milik Pak Indra: jangan disentuh tanpa persetujuan beliau.
+> 🔔 **Sesi baru: baca [status & handoff CLAU AI](https://github.com/deakasep/content/blob/main/docs/status.md) dulu** (otoritas, keputusan yang sudah diambil, status, pekerjaan terbuka). Repo Jerco milik Pak Indra: jangan disentuh tanpa persetujuan beliau.
 
 ## 1. Identitas
 
 | Item | Nilai |
 |---|---|
-| Repo | `d34faiza-commits/clau-core` (public, hanya untuk dilihat; LICENSE) |
+| Repo | `deakasep/core` (public, hanya untuk dilihat; LICENSE) |
 | Peran | Fondasi CLAU AI: constitution, boundary, workflow lintas pilar, orchestrator, kontrak data |
 | Dipakai oleh | `clau-market` (`core/`), `clau-agent` (`core/`), dan `clau-market/agents/core/` |
 | Default branch | `main` (wajib PR + CI hijau, tanpa push langsung; dijaga `main-guard`; lihat AI-BOUNDARY) |

@@ -2,7 +2,7 @@
 
 **Fondasi CLAU AI** untuk bisnis hospitality & tourism Indonesia: konstitusi AI, boundary data, pipeline kerja, orchestrator (routing antar pilar), dan kontrak data bersama. Dipakai oleh semua repo pilar dan platform lewat **git submodule** di path `core/`.
 
-> **Status:** Public, hanya untuk dilihat ([LICENSE](./LICENSE)), split dari `clau-content` 2026-10-04. Status kerja terkini: [status & handoff](https://github.com/d34faiza-commits/clau-content/blob/main/docs/status.md)
+> **Status:** Public, hanya untuk dilihat ([LICENSE](./LICENSE)), split dari `clau-content` 2026-10-04. Status kerja terkini: [status & handoff](https://github.com/deakasep/content/blob/main/docs/status.md)
 > **Dokumen induk:** [AI-CONSTITUTION.md](./AI-CONSTITUTION.md) (v3.1.0, **Approved**)
 > **Boundary:** [AI-BOUNDARY.md](./AI-BOUNDARY.md)
 > **Credit:** [ACKNOWLEDGMENT.md](./ACKNOWLEDGMENT.md)
@@ -12,9 +12,9 @@
 | Repo | Peran | Isi utama | Submodule |
 |---|---|---|---|
 | **clau-core** (repo ini) | Foundation | Constitution, boundary, pipeline, orchestrator, kontrak data | — |
-| [clau-market](https://github.com/d34faiza-commits/clau-market) | Pilar 1: AI Marketing | Rules, prompts, skills, knowledge, templates, QA, contoh | `core/` → repo ini, `agents/` → clau-agent |
-| [clau-agent](https://github.com/d34faiza-commits/clau-agent) | Platform | Frontend (Next.js), backend (FastAPI), registry agent | `core/` → repo ini |
-| [clau-content](https://github.com/d34faiza-commits/clau-content) | Arsip + markas kerja | Snapshot sebelum split (jangan diedit); yang aktif: task board, status & handoff, desain UI | — |
+| [clau-market](https://github.com/deakasep/market) | Pilar 1: AI Marketing | Rules, prompts, skills, knowledge, templates, QA, contoh | `core/` → repo ini, `agents/` → clau-agent |
+| [clau-agent](https://github.com/deakasep/agent) | Platform | Frontend (Next.js), backend (FastAPI), registry agent | `core/` → repo ini |
+| [clau-content](https://github.com/deakasep/content) | Arsip + markas kerja | Snapshot sebelum split (jangan diedit); yang aktif: task board, status & handoff, desain UI | — |
 
 ```text
             ┌────────────────────┐
@@ -83,7 +83,7 @@ Validator mengecek tabel ini cocok dengan frontmatter dan Revision History tiap 
 
 1. Baca [docs/getting-started.md](./docs/getting-started.md).
 2. Baca [AI-CONSTITUTION.md](./AI-CONSTITUTION.md) dan [AI-BOUNDARY.md](./AI-BOUNDARY.md).
-3. Untuk kerja konten, buka repo pilar [clau-market](https://github.com/d34faiza-commits/clau-market).
+3. Untuk kerja konten, buka repo pilar [clau-market](https://github.com/deakasep/market).
 4. Untuk menambah pilar baru, ikuti [docs/5-pillar-architecture.md](./docs/5-pillar-architecture.md) §Menambah pilar.
 
 ## Hospitality Runtime (H1)

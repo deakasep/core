@@ -31,7 +31,7 @@ Pipeline umum untuk semua pilar. Setiap pilar mendetailkan langkah 4–6 di work
 
 | Pilar | Workflow detail | Status |
 |---|---|---|
-| 1 AI Marketing | [clau-market/CONTENT-WORKFLOW.md](https://github.com/d34faiza-commits/clau-market/blob/main/CONTENT-WORKFLOW.md) (9 langkah, termasuk Mode SIMULASI) | Aktif |
+| 1 AI Marketing | [clau-market/CONTENT-WORKFLOW.md](https://github.com/deakasep/market/blob/main/CONTENT-WORKFLOW.md) (9 langkah, termasuk Mode SIMULASI) | Aktif |
 | 2–5 AI Sales, AI Admin, AI Business Intelligence, AI Automation | Dibuat saat pilar diaktifkan (lihat [5-pillar-architecture](./docs/5-pillar-architecture.md)) | Planned |
 
 ## Mode SIMULASI
