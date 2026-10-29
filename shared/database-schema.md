@@ -2,7 +2,7 @@
 
 > **Extension For Review:** [Hospitality Runtime H1 v1.0.0](./runtime/README.md) mendefinisikan kontrak internal baru dan migration gate. Belum mengubah endpoint, tabel, atau enum aktif di dokumen ini.
 
-> **Status: Draft (kontrak hidup), diimplementasikan.** PostgreSQL 16 di clau-agent: migrasi `0001` (skema + Constraint Wajib), `0002` (login), `0003` (kode cadangan 2FA), `0004` (workflow request → draft → QA → approval), `0005` (fact sheet & Konfirmasi Fakta), dan `0006` (antrean AI Tahap 2: `ai_jobs`, `ai_calls`, `ai_budgets`). `0007` (penanda isi konten `draft_flags`, `requests.review_rating` / `source_draft_id`; API 0.10.0, TASK-032). Kontrak ini tetap sumber kebenaran: tabel di database dites sama dengan daftar di bawah (`backend/tests/test_db.py`), jadi perubahan skema dimulai dari dokumen ini. Detail implementasi: `clau-agent/backend/README.md` § Database.
+> **Status: Draft (kontrak hidup), diimplementasikan.** PostgreSQL 16 di clau-agent: migrasi `0001` (skema + Constraint Wajib), `0002` (login), `0003` (kode cadangan 2FA), `0004` (workflow request → draft → QA → approval), `0005` (fact sheet & Konfirmasi Fakta), dan `0006` (antrean AI Tahap 2: `ai_jobs`, `ai_calls`, `ai_budgets`). `0007` (penanda isi konten `draft_flags`, `requests.review_rating` / `source_draft_id`; API 0.10.0, TASK-032). `0008` (langganan & kredit: `payments`, `subscriptions`, `credit_ledger`; API 0.11.0, AI-CONSTITUTION v4.0.0 §4b). Kontrak ini tetap sumber kebenaran: tabel di database dites sama dengan daftar di bawah (`backend/tests/test_db.py`), jadi perubahan skema dimulai dari dokumen ini. Detail implementasi: `clau-agent/backend/README.md` § Database.
 
 ## Prinsip
 
@@ -37,6 +37,9 @@
 | `ai_jobs` | `id`, `request_id` (FK), `agent_id`, `intent`, `kind` (`draft`), `status` (`queued`/`running`/`succeeded`/`failed`/`cancelled`), `attempts`, `max_attempts`, `run_after`, `locked_at`, `locked_by`, `error_code`, `fact_sheet_id` (FK), `draft_id` (FK), `requested_by` (FK users), `created_at`, `finished_at` | Antrean kerja AI (Tahap 2, worker mengambil dengan `FOR UPDATE SKIP LOCKED`). Satu job aktif per request; `error_code` dari daftar tetap (bukan teks error provider); tanpa isi prompt |
 | `ai_calls` | `id`, `job_id` (FK), `provider`, `model`, `prompt_version`, `input_tokens`, `output_tokens`, `cache_read_tokens`, `cache_write_tokens`, `cost_micro_usd`, `stop_reason`, `provider_request_id`, `latency_ms`, `created_at` | Satu baris per panggilan model (AI-BOUNDARY § Data ke Provider AI). **Append-only**; tanpa isi prompt/jawaban (isi hasil ada di `drafts`) |
 | `ai_budgets` | `scope` (`global` / `client_code`), `month` (tanggal 1), `limit_micro_usd`, `alert_at_pct`, `updated_by` (FK users), `updated_at` | Batas biaya AI per bulan (PK `scope` + `month`). Tanpa batas `global` bulan berjalan = job AI ditolak (fail closed) |
+| `payments` | `id`, `client_code` (FK), `kind` (`subscription`/`topup`), `plan_months` (1/3/6/12, wajib untuk `subscription`), `credits` (wajib untuk `topup`), `amount_idr`, `provider` (`fake`/`midtrans`), `order_id` (unik, dibuat server), `status` (`pending`/`paid`/`expired`/`failed`), `method`, `requested_by` (FK users), `created_at`, `paid_at` | Migrasi 0008. Tagihan paket/top up. Nominal dari katalog server (`clau-market/commercial/pricing.md`), bukan dari browser. Tanpa data kartu/rekening (AI-BOUNDARY § Token Kanal & Pembayaran); status lunas hanya dari webhook terverifikasi atau simulasi provider `fake` |
+| `subscriptions` | `id`, `client_code` (FK), `payment_id` (FK, unik), `plan_months`, `starts_at`, `ends_at`, `created_at` | Migrasi 0008. Satu baris per paket yang lunas; perpanjangan dimulai saat paket sebelumnya berakhir. Append-only |
+| `credit_ledger` | `id`, `client_code` (FK), `delta` (≠ 0), `bucket` (`monthly`/`topup`), `reason` (`monthly_grant`/`monthly_expire`/`topup`/`usage`/`refund`/`adjustment`), `subscription_id` (FK), `period_start` (date), `payment_id` (FK), `ai_job_id` (FK), `expires_at`, `note`, `created_by` (FK users, null = sistem), `created_at` | Migrasi 0008. Buku kredit **append-only**; saldo = jumlah `delta` per `bucket`. Kredit bulanan direset tiap periode (sisa dihapus lewat baris `monthly_expire`, lalu `monthly_grant`); pemakaian memotong `monthly` dulu lalu `topup` |
 
 ## Relasi
 
@@ -49,6 +52,7 @@ clients 1─n consent_refs
 users 1─n memberships n─1 clients ; fact_sheets 1─n fact_confirmations
 users 1─n notifications ; users 1─n sessions ; users 1─n mfa_recovery_codes ; audit_log → semua objek
 requests 1─n ai_jobs 1─n ai_calls ; ai_jobs 0─1 drafts ; ai_jobs n─1 fact_sheets ; ai_budgets (global / per client_code, per bulan)
+clients 1─n payments 0─1 subscriptions ; clients 1─n credit_ledger n─1 (subscriptions | payments | ai_jobs)
 ```
 
 ## Constraint Wajib (saat implementasi)
@@ -86,6 +90,10 @@ requests 1─n ai_jobs 1─n ai_calls ; ai_jobs 0─1 drafts ; ai_jobs n─1 fac
 | (0007) Level minimum draft juga ≥ level penanda aktif tertinggi (`draft_flags`), dan untuk request `localize` ≥ level minimum draft asal (`requests.source_draft_id`) → `approval_level_too_low` | Rule 08: level dari isi konten, terjemahan ikut konten asal |
 | (0007) `draft_flags`: penanda `server` tidak bisa dihapus (`flag_not_removable`); `removed_*` diisi sekali, hanya oleh `owner`/`content_lead` dengan alasan; baris tidak bisa diubah lain atau dihapus (`decision_record_append_only`); tidak ada penanda baru untuk request selesai (`request_closed`); draft versi baru mewarisi penanda aktif non-server versi sebelumnya (trigger, juga draft worker AI) | Penanda tidak bisa diturunkan diam-diam |
 | (0007) `requests.review_rating` wajib 1–5 untuk intent `review-reply`; `requests.source_draft_id` wajib untuk `localize` dan milik klien yang sama → `review_rating_required` / `source_draft_required` / `source_draft_invalid` | Level balasan review & terjemahan bisa dihitung |
+| (0008) `payments`: baru selalu `pending`; transisi hanya `pending → paid/expired/failed`; selesai beku; kolom identitas (klien, jenis, paket, kredit, nominal, provider, `order_id`) tidak bisa diubah; tidak dihapus → `payment_transition` / `billing_record_append_only`; `paid` wajib `paid_at` | Status bayar tidak bisa dimundurkan atau dipalsukan setelah lunas |
+| (0008) `subscriptions`: hanya dari `payments` `paid` berjenis `subscription` untuk klien dan paket yang sama → `subscription_payment_mismatch`; append-only | Paket aktif selalu punya pembayaran lunas |
+| (0008) `credit_ledger` append-only (UPDATE/DELETE/TRUNCATE ditolak, hak ubah dicabut dari role aplikasi) → `billing_record_append_only`; tanda `delta` dan rujukan wajib per `reason` (grant/topup/refund positif, usage/expire negatif; `topup` wajib `payment_id` lunas berjenis topup klien itu; `usage`/`refund` wajib `ai_job_id`; `monthly_*` wajib `subscription_id` + `period_start`; `adjustment` wajib `created_by` + `note`) → `credit_entry_invalid`; saldo `bucket` tidak boleh negatif setelah baris masuk → `credit_insufficient` | Kredit tidak bisa dibuat dari udara, dipakai melebihi saldo, atau diubah diam-diam |
+| (0008) Satu `monthly_grant` per `subscription_id` + `period_start`, satu `topup` per `payment_id`, satu `usage` dan satu `refund` per `ai_job_id` + `bucket`; `refund` tidak melebihi `usage` job itu → `credit_entry_invalid` | Hibah ganda dan refund ganda tertolak di database |
 | Query Portal selalu difilter `memberships.scope = client_code` | Isolasi data antar klien |
 
 ## Keputusan Implementasi (2026-10-12)
@@ -103,6 +111,7 @@ Detail yang belum diatur kontrak dan ditetapkan saat implementasi (clau-agent mi
 | Status request (0004) | `open` → `in_progress` (draft dibuat / Revise) → `approved` / `rejected` (approval versi terbaru); `closed` disiapkan untuk penutupan manual |
 | Isi draft | Baris versi yang tersimpan tidak bisa diubah; revisi = versi baru (approval terikat versi) |
 | Antrean AI (2026-10-16, migrasi `0006`) | `ai_jobs.error_code` ∈ `provider_error`, `provider_unavailable`, `refused`, `invalid_output`, `budget_exceeded`, `request_closed`, `fact_sheet_missing`, `worker_timeout`, `ai_disabled`, `cancelled_by_user`; retry hanya untuk `provider_unavailable`/`worker_timeout` (jeda bertambah), maks 3 percobaan. QA otomatis agent = `qa_records` gate `claim-verification`, `reviewer_id` NULL, `reviewer_role` `agent`, `independent` false |
+| Langganan & kredit (2026-10-29, migrasi `0008`) | Harga, kredit bulanan (500), paket top up, dan tarif kredit per intent = `clau-market/commercial/pricing.md`, disalin ke konfigurasi backend (`app/billing/catalog.py`, dites). Klien SIMULASI tidak dipotong kredit (mode uji). `order_id` = `CLAU-<client_code>-<id>-<acak>` |
 | Enum lain | `clients.vertical` & `claims.category` = `content-brief.schema.json`; `requests.priority` = priority engine (`Low`/`Normal`/`High`/`Urgent`) |
 
 ## Open Items
