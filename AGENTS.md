@@ -1,10 +1,10 @@
 ---
 document_title: "AGENTS.md — Instruksi Umum AI Agent CLAU"
 document_owner: "Dea Karisna / AI Marketing"
-version: "1.1.0"
+version: "1.2.0"
 status: "Approved"
-effective_date: "2026-10-27"
-approval_reference: "Perintah Pak Indra via ChatGPT/Codex, 2026-10-27: pastikan OpenAI/ChatGPT otomatis merge seperti Claude; otorisasi untuk merge PR dalam scope pekerjaan yang sudah diizinkan setelah CI hijau. Berlaku setelah perubahan ini masuk main."
+effective_date: "2026-10-29"
+approval_reference: "v1.2.0: perintah owner Dea Karisna (d34faiza) via sesi Claude, 2026-10-29, dengan konfirmasi owner bahwa Pak Indra sudah menyetujui model langganan (AI-CONSTITUTION v4.0.0). v1.1.0: perintah Pak Indra via ChatGPT/Codex, 2026-10-27: pastikan OpenAI/ChatGPT otomatis merge seperti Claude; otorisasi untuk merge PR dalam scope pekerjaan yang sudah diizinkan setelah CI hijau. Berlaku setelah perubahan ini masuk main."
 classification: "Internal"
 ---
 
@@ -24,7 +24,8 @@ Instruksi umum untuk AI agent (Claude, Codex, ChatGPT, Grok, agent di platform c
 
 - Klaim di output eksternal wajib **DATA FINAL**. **ASSUMPTION** tidak boleh tampil sebagai fakta.
 - Data orang (tamu, staf, talent) hanya dengan consent tercatat; data pribadi disamarkan sebelum masuk AI tool.
-- AI **tidak** publish, mengirim pesan ke tamu/pihak luar, mengubah harga/ketersediaan/sistem client, atau self-approve.
+- AI **tidak** publish atas keputusannya sendiri, mengirim pesan ke pelanggan/pihak luar, mengubah harga/ketersediaan/sistem client, atau self-approve. Posting ke kanal klien hanya oleh service platform setelah klien menyetujui versi draft itu (AI-CONSTITUTION §4.7).
+- Aksi agen yang memanggil model AI hanya berjalan bila kredit klien cukup (AI-CONSTITUTION §4b); jangan membuat jalur yang melewati pengecekan kredit.
 - QA atas output buatan sendiri ditandai **self-review**; output berisiko butuh review independen.
 - Credential tidak pernah diminta, diterima, atau disimpan.
 
@@ -77,3 +78,4 @@ scope (termasuk dependency upgrade terpisah) tidak ikut di-merge hanya karena hi
 | 1.0.0 | 2026-10-04 | Draft | Instruksi agent lintas repo untuk split CLAU AI; instruksi konten dipindah ke clau-market/AGENTS.md |
 | 1.0.0 | 2026-10-04 | Approved | Approved oleh owner (Dea Karisna / d34faiza); ditambah aturan otoritas perubahan untuk agent |
 | 1.1.0 | 2026-10-27 | Approved | Perintah Pak Indra: ChatGPT/Codex dan Claude menyelesaikan PR yang diizinkan sampai merge setelah CI hijau, exact-head guard, verifikasi main dan sync downstream |
+| 1.2.0 | 2026-10-29 | Approved | Model langganan (AI-CONSTITUTION v4.0.0): posting hanya setelah approval klien lewat service platform; aksi AI wajib lewat pengecekan kredit. Perintah owner dengan konfirmasi persetujuan Pak Indra |
