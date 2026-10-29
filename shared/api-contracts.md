@@ -7,8 +7,8 @@ Kontrak HTTP antara frontend dan backend clau-agent, dan antara platform dengan 
 ## Prinsip
 
 - JSON, UTF-8, timestamp ISO 8601 dengan zona waktu.
-- Tidak ada endpoint yang **publish** ke platform sosial/OTA atau **mengirim** pesan ke tamu. Release dilakukan manusia (Constitution §4.7).
-- Tidak ada endpoint yang menerima credential platform client.
+- Tidak ada endpoint yang **publish** ke platform sosial/OTA atau **mengirim** pesan ke tamu atas keputusan AI. Sejak AI-CONSTITUTION v4.0.0 §4.7 publish hanya oleh service platform setelah klien menyetujui versi draft (**Planned**, belum ada endpoint); sampai itu release dilakukan manusia.
+- Tidak ada endpoint yang menerima credential (password) platform client; kanal klien kelak lewat OAuth resmi (AI-BOUNDARY § Token Kanal & Pembayaran).
 - Error: `{"error": {"code": "<snake_case>", "message": "<teks>"}}` untuk semua error, termasuk validasi request (422 `validation_error`).
 - **Autentikasi** (0.5.0): sesi cookie dari `POST /auth/login`. Setiap request yang mengubah data (POST/PUT/PATCH/DELETE) wajib header `X-CSRF-Token` (dari `Me.csrf_token`) dan Origin aplikasi. Selama `Me.next` ≠ `ready` (ganti password sementara / aktifkan 2FA wajib untuk `owner` dan `content_lead` agency, sejak 0.9.1; juga berlaku untuk sesi yang dibuat sebelum peran itu wajib 2FA), hanya endpoint `/auth/*` yang bisa dipakai (403 `password_change_required` / `mfa_setup_required`). Tidak ada pendaftaran publik: owner pertama dibuat lewat CLI server. Browser tidak memanggil backend langsung; frontend meneruskan `/api/*` ke backend (keputusan VPS #1).
 - Pelanggaran aturan database (Constraint Wajib) = 409 dengan kode aturan, mis. `approval_needs_independent_review`, tanpa detail SQL. Daftar lengkap: § Kode Aturan Approval (sumber tunggal; UI & desain merujuk ke sini).
@@ -227,6 +227,28 @@ AI (0.9.0):
 - `AiBudget` = `{scope, month: "YYYY-MM", limit_micro_usd, alert_at_pct, updated_by, updated_at}`. Biaya dalam mikro-USD (1 USD = 1.000.000) supaya tanpa pembulatan desimal.
 - `AiUsage` = `{month, total_micro_usd, calls, budgets: [AiBudget + {spent_micro_usd, alert}], by_client: [{client_code, cost_micro_usd, calls}], by_agent: [{agent_id, cost_micro_usd, calls}]}` (tanpa isi prompt/jawaban).
 
+### Langganan & Kredit (0.11.0)
+
+Model langganan (AI-CONSTITUTION v4.0.0 §4b, AI-BOUNDARY 2.0.0 § Token Kanal & Pembayaran; migrasi `0008`). Angka katalog = `clau-market/commercial/pricing.md`.
+
+| Method & path | Status | Request | Response |
+|---|---|---|---|
+| `GET /billing/catalog` | **Implemented** (0.11.0), publik | — | `Catalog` |
+| `GET /billing/wallet?client_code=` | **Implemented** (0.11.0), staf agency / anggota klien | — | `Wallet` (memberi kredit bulan berjalan bila periode baru dimulai) |
+| `GET /billing/ledger?client_code=&limit&offset` | **Implemented** (0.11.0) | — | `{items: [CreditEntry], total, limit, offset}` terbaru dulu |
+| `GET /billing/payments?client_code=&limit&offset` | **Implemented** (0.11.0) | — | `{items: [Payment], total, limit, offset}` |
+| `POST /billing/checkout` | **Implemented** (0.11.0), owner atau `client_approver` klien itu | `{client_code, kind: "subscription"\|"topup", plan_months?, topup_credits?}` | 201 `Payment` + `payment_url` (provider `fake`: null). Nominal & kredit dari katalog server. 422 `invalid_plan`; 409 `payment_pending_exists` (masih ada tagihan `pending` < 24 jam untuk klien itu), `billing_disabled`; 404 `client_not_found` |
+| `POST /billing/payments/{id}/simulate-paid` | **Implemented** (0.11.0), owner, hanya provider `fake` dan `CLAU_ENV` ≠ `production` | — | `Payment` lunas + efeknya (paket / kredit). 409 `payment_not_pending`, `billing_simulation_disabled` |
+| `POST /billing/webhooks/midtrans` | **Implemented** (0.11.0), tanpa sesi | Notifikasi Midtrans | `{ok: true}`. Tanda tangan `SHA512(order_id + status_code + gross_amount + server_key)` wajib cocok dan nominal = tagihan (401 `invalid_signature`, 409 `amount_mismatch`); diproses idempoten (notifikasi ulang tidak memberi kredit dua kali) |
+| `POST /billing/adjustments` | **Implemented** (0.11.0), owner | `{client_code, credits (±, ≠ 0), note}` | 201 `CreditEntry` (`reason` `adjustment`, `bucket` `topup`). 409 `credit_insufficient` bila hasilnya negatif |
+
+Pemotongan kredit: `POST /requests/{id}/ai-drafts` memotong `credits` intent itu dari saldo klien di transaksi yang sama dengan pembuatan job (kunci per klien; `monthly` dulu, lalu `topup`). Saldo kurang → 402 `credits_insufficient` sebelum job dibuat. Job `failed`/`cancelled` mengembalikan kredit penuh (`refund`). Klien SIMULASI tidak dipotong. Paket aktif tidak disyaratkan untuk memakai sisa kredit top up.
+
+- `Catalog` = `{currency: "IDR", monthly_credits, plans: [{plan_months, price_idr, save_pct}], topups: [{credits, price_idr}], credit_costs: [{intent, agent, credits, status}]}`.
+- `Wallet` = `{client_code, balance: {monthly, topup, total}, subscription: {plan_months, starts_at, ends_at, active, period_start, next_reset} | null, simulation}`.
+- `CreditEntry` = `{id, client_code, delta, bucket, reason, subscription_id, period_start, payment_id, ai_job_id, expires_at, note, created_by, created_at}`.
+- `Payment` = `{id, client_code, kind, plan_months, credits, amount_idr, provider, order_id, status, method, requested_by, created_at, paid_at, payment_url?}`.
+
 `Me` = `{user: User, mfa_required, must_change_password, next: "ready"|"password_change"|"mfa_setup", active_sessions, recovery_codes_left, csrf_token}`. `User` = `{id, display_name, email, locale, timezone, salutation, memberships: [{scope, role, max_level}], mfa_enabled, disabled, last_login_at}` (tanpa hash atau secret). `GET /users` juga mengembalikan `clients` (daftar `client_code`) untuk form peran.
 
 ## Versioning
@@ -246,3 +268,4 @@ AI (0.9.0):
 | 0.9.0 | 2026-10-16 | AI menulis draft (Tahap 2): `POST /requests/{id}/ai-drafts`, `/ai-jobs`, `/ai-usage`, `PUT /ai-budgets`; antrean + worker dengan AI fact-check; kode `ai_disabled`, `ai_intent_not_enabled`, `fact_sheet_required`, `ai_provider_test_only`, `ai_budget_missing`, `ai_budget_exceeded`, `ai_job_active`, `ai_job_not_cancellable`, `ai_job_transition`, `ai_record_append_only`, `ai_job_draft_mismatch`, `ai_draft_without_job` |
 | 0.9.1 | 2026-10-22 | Keamanan sebelum klien login (TASK-054): 2FA wajib juga untuk `content_lead` agency (`Me.mfa_required`, `Me.next = mfa_setup`, 403 `mfa_setup_required`); tanpa endpoint baru |
 | 0.10.0 | 2026-10-22 | (TASK-032, keputusan owner K1–K6; implementasi clau-agent migrasi 0007): penanda isi konten di draft (`content_flags`, `POST /drafts/{id}/flags`, `/remove`), jaring pengaman server, `review_rating` untuk `review-reply`, `source_draft_id` untuk `localize`, level minimum draft = tertinggi dari aturan lama + penanda + draft asal; kode `content_flags_required`, `review_rating_required`, `source_draft_required`, `source_draft_invalid`, `flag_exists`, `flag_not_removable`, `flag_not_active` |
+| 0.11.0 | 2026-10-29 | Langganan & kredit (AI-CONSTITUTION v4.0.0 §4b; migrasi 0008): `/billing/catalog`, `/billing/wallet`, `/billing/ledger`, `/billing/payments`, `POST /billing/checkout`, `/billing/payments/{id}/simulate-paid`, `/billing/webhooks/midtrans`, `/billing/adjustments`; pemotongan & refund kredit pada job AI; kode `credits_insufficient`, `invalid_plan`, `payment_pending_exists`, `billing_disabled`, `payment_not_pending`, `billing_simulation_disabled`, `invalid_signature`, `amount_mismatch`, `payment_transition`, `subscription_payment_mismatch`, `credit_entry_invalid`, `credit_insufficient`, `billing_record_append_only` |
