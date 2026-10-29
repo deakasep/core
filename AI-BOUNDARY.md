@@ -1,10 +1,10 @@
 ---
 document_title: "CLAU AI Boundary"
 document_owner: "Dea Karisna / AI Marketing"
-version: "1.7.0"
+version: "2.0.0"
 status: "Approved"
-effective_date: "2026-10-27"
-approval_reference: "Perintah Pak Indra via ChatGPT/Codex, 2026-10-27: pastikan OpenAI/ChatGPT otomatis merge seperti Claude; otorisasi untuk merge PR dalam scope pekerjaan yang sudah diizinkan setelah CI hijau. Berlaku setelah perubahan ini masuk main. Riwayat approval versi sebelumnya tetap tercatat di Revision History dan git."
+effective_date: "2026-10-29"
+approval_reference: "v2.0.0: perintah owner Dea Karisna (d34faiza) via sesi Claude, 2026-10-29, dengan konfirmasi owner bahwa Pak Indra sudah menyetujui model langganan seperti Sintra.ai (AI-CONSTITUTION v4.0.0): posting setelah approval klien, token OAuth kanal dan referensi pembayaran di database platform. v1.7.0: perintah Pak Indra via ChatGPT/Codex, 2026-10-27: pastikan OpenAI/ChatGPT otomatis merge seperti Claude; otorisasi untuk merge PR dalam scope pekerjaan yang sudah diizinkan setelah CI hijau. Berlaku setelah perubahan ini masuk main. Riwayat approval versi sebelumnya tetap tercatat di Revision History dan git."
 classification: "Internal"
 ---
 
@@ -59,7 +59,8 @@ Semua repo **public, hanya untuk dilihat** (keputusan owner 2026-10-16; lisensi 
 | Client Workspace | Drive/folder per client | Tidak | Brief, draft, konten final, approval |
 | Media Library | Storage media client | Tidak | Foto, video, logo, release form |
 | Consent Register | Sistem client terproteksi | Tidak | Consent tamu, staf, talent, UGC |
-| Platform Database | Database platform (lihat [shared/database-schema.md](./shared/database-schema.md)) | Tidak | Data operasional; data tamu hanya bila perlu dan terenkripsi |
+| Platform Database | Database platform (lihat [shared/database-schema.md](./shared/database-schema.md)) | Tidak | Data operasional; data tamu hanya bila perlu dan terenkripsi; paket, saldo & ledger kredit, referensi pembayaran; token OAuth kanal klien **terenkripsi** (§ Token Kanal & Pembayaran) |
+| Payment Gateway | Midtrans/Xendit (dicatat di [shared/integrations.md](./shared/integrations.md)) | Tidak | Data kartu/rekening dan proses bayar; platform hanya menyimpan ID transaksi, nominal, status |
 | Credential Store | Password/secret manager | Tidak | Semua credential |
 | Provider AI | Layanan model AI (mis. Claude API) | Tidak | Hanya data yang diizinkan § Data ke Provider AI; masa simpan mengikuti kebijakan provider yang dicatat di [shared/integrations.md](./shared/integrations.md) |
 
@@ -72,7 +73,19 @@ Berlaku untuk setiap panggilan platform ke model AI (keputusan VPS #5; v1.4.0). 
 3. **Dicatat:** setiap panggilan (model, token, biaya, waktu, versi prompt) di database platform (`ai_calls`), tanpa menyimpan isi prompt atau jawaban di log.
 4. **Provider, model, wilayah pemrosesan, dan masa simpan data di provider** dicatat per environment di [shared/integrations.md](./shared/integrations.md). Klien dengan syarat data khusus = **CLIENT CONFIRMATION** sebelum datanya diproses.
 5. **API key** provider hanya di server (VPS 2, `.env` 600, hanya untuk container worker), tidak pernah di repo, log, notifikasi, atau chat.
-6. Hasil AI selalu **draft** (Level B): melewati AI fact-check terhadap fakta klien, review manusia, dan approval tertulis klien (Rule 08); tidak ada publish otomatis.
+6. Hasil AI selalu **draft** (Level B): melewati AI fact-check terhadap fakta klien dan **approval klien** (klik Setujui di dashboard untuk versi draft itu; layanan terkelola tetap Rule 08 L1–L3). Tidak ada publish tanpa approval tersebut; publish dilakukan platform lewat API resmi kanal, bukan oleh model AI.
+7. **Kredit dicek sebelum panggilan.** Job AI hanya dibuat bila saldo kredit klien cukup untuk tarif aksinya (AI-CONSTITUTION §4b); kredit dipotong saat job dibuat dan dikembalikan otomatis bila job gagal karena sistem/provider.
+
+## Token Kanal & Pembayaran
+
+Berlaku sejak v2.0.0 (model langganan, AI-CONSTITUTION v4.0.0 §4.8, §4b).
+
+1. **Akses kanal klien** (Instagram/Facebook, TikTok, Google Business Profile, dan lainnya) hanya lewat OAuth resmi platform tersebut, dengan scope minimum untuk membaca insight dasar dan memposting konten yang sudah disetujui. Password klien tidak pernah diminta, diterima, atau disimpan.
+2. **Token OAuth** disimpan di Platform Database **terenkripsi** (kunci di secret server, bukan di database atau repo), tidak pernah dikirim ke model AI, ditampilkan di UI/log/notifikasi, atau dibagikan ke klien lain. Klien bisa memutus kanal kapan saja; token lalu dihapus dan dicabut di platform bila API-nya mendukung.
+3. **Publish** hanya oleh service platform (bukan worker AI) untuk draft yang sudah disetujui klien, pada versi yang disetujui, ke kanal yang dipilih klien saat approval; hasilnya dicatat di `publications` dan audit log.
+4. **Pembayaran** hanya lewat payment gateway resmi. Platform tidak menyimpan nomor kartu, rekening, PIN, atau OTP; yang disimpan hanya ID order/transaksi gateway, nominal, metode, dan status. Notifikasi (webhook) gateway wajib diverifikasi tanda tangannya dan diproses idempoten; status lunas hanya dari webhook terverifikasi, tidak pernah dari browser.
+5. **Server key** payment gateway dan **client secret** OAuth aplikasi hanya di server (`.env` 600), seperti API key provider AI.
+6. Mode uji (sandbox gateway, provider tiruan) wajib dipakai di development dan CI; kunci produksi tidak pernah dipakai di test.
 
 ## Multi-Repo & Submodule
 
@@ -194,3 +207,4 @@ Berlaku untuk server CLAU (VPS 1 `release/vps1`, VPS 2) dan untuk pekerjaan yang
 | 1.6.0 | 2026-10-22 | Approved | Disiplin Push: § Kapan PR Boleh Disebut Selesai (cek langsung di GitHub, tidak konflik + check wajib hijau atau sudah merged; laporan apa adanya; konflik diselesaikan dengan merge `main`; kartu ClickUp Closed setelah merged) dan § Versi Live Hanya Maju (rollback hanya atas perintah eksplisit owner dengan target; perbaikan maju; rollback otomatis health check dan tombol mati AI tetap boleh). Pola diadopsi dari Jerco (lihat ACKNOWLEDGMENT). Perintah owner 2026-10-22 |
 | 1.6.1 | 2026-10-22 | Approved | PATCH (wording): peran clau-content menyebut board task Markdown `tasks/` sebagai riwayat dan board kerja di ClickUp (keputusan 2026-10-21). Perintah owner 2026-10-22 |
 | 1.7.0 | 2026-10-27 | Approved | Perintah Pak Indra: otorisasi merge oleh ChatGPT/Codex/Claude untuk task yang diizinkan setelah CI hijau pada head terbaru; verifikasi main/downstream, tanpa bypass dan tanpa mengubah human approval konten |
+| 2.0.0 | 2026-10-29 | Approved | Perintah owner Dea Karisna (d34faiza), dengan konfirmasi owner bahwa Pak Indra sudah menyetujui (model langganan, AI-CONSTITUTION v4.0.0). MAJOR: § Data ke Provider AI poin 6 (posting setelah approval klien lewat API resmi) dan poin 7 baru (kredit dicek sebelum panggilan AI); § Token Kanal & Pembayaran baru; zona Payment Gateway |

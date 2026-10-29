@@ -18,10 +18,16 @@ Tabel routing request → pilar → skill → level otonomi (AI-CONSTITUTION §4
 | `guest-message` | "Pesan pre-arrival ke tamu" | 2 AI Sales | — | — | **Planned → eskalasi** | B |
 | `sop` | "SOP housekeeping" | 3 AI Admin | — | — | **Planned → eskalasi** | B |
 | `report` | "Report performa bulanan" | 4 AI Business Intelligence | `build-monthly-report` (+ template `monthly-report`, Pilar 1) | clau-market | L1 | B |
+| `image` | "Gambar promo diskon akhir pekan" | 1 AI Marketing | — | — | **Planned → eskalasi** | B |
+| `video` | "Video AI 8 detik produk baru" | 1 AI Marketing | — | — | **Planned → eskalasi** | B |
+| `data-analysis` | "Analisis file penjualan Oktober" | 4 AI Business Intelligence | — | — | **Planned → eskalasi** | B |
+| `data-annotation` | "Labeli 500 ulasan positif/negatif" | 4 AI Business Intelligence | — | — | **Planned → eskalasi** | B |
+| `integration` | "Hubungkan pesanan toko ke Google Sheets" | 5 AI Automation | — | — | **Planned → eskalasi** | B |
+| `web-dev` | "Landing page promo sederhana" | 5 AI Automation | — | — | **Planned → eskalasi** | B |
 
 \* `review-reply` sementara di Pilar 1. Saat Pilar 2 AI Sales aktif (customer service & reputasi), intent ini dipindah (**NEXT ACTION** saat aktivasi Pilar 2).
 
-Pilar 5 AI Automation tidak punya intent konten sendiri; alurnya memanggil intent pilar lain (lihat [blueprints/automation.md](../docs/blueprints/automation.md)).
+Intent `image`, `video`, `data-analysis`, `data-annotation`, `integration`, dan `web-dev` ditambahkan untuk tim agen langganan (AI-CONSTITUTION v4.0.0, 2026-10-29). Statusnya **Planned** sampai skill, persona, eval, dan tarif kreditnya ada; Pilar 5 AI Automation memakai `integration` dan `web-dev`, dan alur end-to-end tetap memanggil intent pilar lain (lihat [blueprints/automation.md](../docs/blueprints/automation.md)).
 
 ## Aturan
 
